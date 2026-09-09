@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from './auth'
 import Home from './pages/Home'
 import Booking from './pages/Booking'
@@ -51,16 +51,15 @@ export default function App() {
           {SECTIONS.map(([id, label]) => (
             <button key={id} className="nav-anchor link" onClick={() => goSection(id)}>{label}</button>
           ))}
-          <button className="nav-anchor link"> {routeLink('/booking', 'Записатись')}</button>
+          {currentUser?.role !== 'Admin' && (
+            <button className="nav-anchor link"> {routeLink('/booking', 'Записатись')}</button>
+          )}
           {currentUser ? (
-            // <button className="nav-anchor link"> </button>
-
               <>
                 <button className="nav-anchor link">{currentUser.role !== 'Admin' && routeLink('/cabinet', 'Мій кабінет')} </button>
                 <button className="nav-anchor link">{currentUser.role === 'Admin' && routeLink('/admin', 'Адмін')} </button>
                 <button className="link" onClick={logout}>Вийти</button>
               </>
-            
           ) : (
             routeLink('/login', 'Увійти')
           )}
@@ -75,7 +74,7 @@ export default function App() {
           {SECTIONS.map(([id, label]) => (
             <button key={id} className="link" onClick={() => goSection(id)}>{label}</button>
           ))}
-          {routeLink('/booking', 'Записатись')}
+          {currentUser?.role !== 'Admin' && routeLink('/booking', 'Записатись')}
           {currentUser ? (
             <>
               {currentUser.role !== 'Admin' && routeLink('/cabinet', 'Мій кабінет')}
@@ -91,10 +90,11 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/booking" element={<Booking />} />
+          {/* Адмін не бронює і не має кабінету — редирект на адмінку (вимога 2026-09-09). */}
+          <Route path="/booking" element={currentUser?.role === 'Admin' ? <Navigate to="/admin" replace /> : <Booking />} />
           <Route path="/masters/:id" element={<MasterSchedule />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/cabinet" element={<Cabinet />} />
+          <Route path="/cabinet" element={currentUser?.role === 'Admin' ? <Navigate to="/admin" replace /> : <Cabinet />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>

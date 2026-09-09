@@ -224,7 +224,7 @@ label { font-size: 13px; color: var(--text-dim); display: block; }
 
 @media (max-width: 700px) {
   .steps { grid-template-columns: 1fr; }
-  .header { flex-direction: column; gap: 10px; }
+  .header { /* flex-direction: column; */ gap: 10px; }
 }
 
 /* ---------- Картка майстра (Фаза 7) ---------- */
@@ -305,8 +305,11 @@ a.master-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 
   .nav-mobile {
     display: flex; flex-direction: column; gap: 4px;
     background: var(--glass-15); border: 1px solid var(--glass-30);
-    border-radius: var(--radius); padding: 10px 14px;
-    position: static; width: 100%;
+    border-radius: 4px 4px 16px 16px/* var(--radius) */; padding: 10px 14px;
+    position: fixed; width: 100%;
+    top: 68px;
+    z-index: 10;
+    background-color: var(--accent-dark);
   }
   .nav-mobile a { color: var(--text); text-align: left; padding: 6px 10px; text-decoration: none; border-radius: var(--radius-sm); }
   .nav-mobile button { color: var(--text-dim); text-align: left; padding: 6px 10px; border-radius: var(--radius-sm); }
