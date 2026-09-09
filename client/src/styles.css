@@ -6,15 +6,17 @@
    ============================================================ */
 
 :root {
-  /* --- Акцент (фалка) --- */
-  --accent: #7851A9;              /* основний акцент (заливки, кнопки) */
-  --accent-dark: #5e3a7a;         /* hover (похідне від #5D3A5A) */
-  --accent-2: #DA70D6;            /* орхідея — hover/градієнт, текст-акцент */
+  /* --- Акцент (фіалка) --- */
+  --accent-rgb: 120, 81, 169;              /* основний акцент-заливка (заливки, кнопки) */
+  --accent: #7851A9;              /* основний акцент-заливка (заливки, кнопки) */
+  --accent-dark: #5D3A5A;         /* темніший фіалковий для hover */
+  --accent-2: #DA70D6;            /* орхідея — текст-акцент/лінки/hover, градієнт */
   --accent-contrast: #C71585;     /* важливі акценти/badge, «увага» */
+  --lavender: #E6E6FA;            /* лавандовий — світлі підписи / база скла */
 
   /* --- Текст --- */
   --text: #ffffff;
-  --muted: #c6a2c8;               /* світліший thistle для підписів */
+  --muted: #C8A2C8;               /* thistle — приглушений текст */
   --text-dim: rgba(230, 230, 250, 0.6);  /* lavender-прозорий */
 
   /* --- Скло --- */
@@ -39,7 +41,9 @@
   --border: var(--glass-15);
   --ok: #6fcf7c;
   --wine: #722F37;
-  --gold: #FFD700;
+  --info: #4B61D1;
+/* Глобальний темний color-scheme для консистентності скролбарів/контролів (Фаза 6, опційно). */
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -109,9 +113,9 @@ main { flex: 1; max-width: 1000px; margin: 0 auto; padding: 24px 16px; width: 10
 .price { font-weight: 700; color: var(--accent); }
 .muted { color: var(--muted); font-size: 14px; }
 .error {
-  color: #ff8a80;
-  background: rgba(255, 100, 107, 0.12);
-  border: 1px solid rgba(255, 100, 107, 0.35);
+  color: #ea8d8d;
+  background: rgba(114, 47, 55, 0.14);
+  border: 1px solid rgba(114, 47, 55, 0.45);
   border-radius: var(--radius-sm);
   padding: 8px 12px;
 }
@@ -196,7 +200,7 @@ label { font-size: 13px; color: var(--text-dim); display: block; }
 .status { padding: 3px 10px; border-radius: 999px; font-size: 12px; border: 1px solid transparent; }
 .status.Confirmed { background: rgba(111, 207, 124, .15); color: var(--ok); border-color: rgba(111, 207, 124, .4); }
 .status.PendingVerification { background: rgba(255, 193, 7, .12); color: #ffc94d; border-color: rgba(255, 193, 7, .35); }
-.status.Cancelled { background: rgba(255, 100, 107, .12); color: #ff8a80; border-color: rgba(255, 100, 107, .4); }
+.status.Cancelled { background: rgba(114, 47, 55, .14); color: #dd9b9b; border-color: rgba(114, 47, 55, .45); }
 .status.Completed { background: rgba(122, 138, 255, .14); color: #9aa6ff; border-color: rgba(122, 138, 255, .4); }
 
 /* ---------- Таби ---------- */
@@ -239,7 +243,7 @@ a.master-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 
 .master-card__cta { display: block; margin-top: 10px; color: var(--accent); font-size: 14px; }
 
 /* ---------- Сторінка майстра (Фаза 8) ---------- */
-.master-head { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 24px; }
+.master-head { display: flex; gap: 20px; align-items: flex-start; margin: 16px 0 24px; }
 .master-head .master-photo { width: 160px; flex: 0 0 160px; margin-bottom: 0; }
 .day--off { opacity: .55; }
 .day-hours { color: var(--muted); font-size: 13px; }
@@ -272,6 +276,139 @@ a.master-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 
   .master-head .master-photo { width: 100%; flex: none; }
   .calendar { max-width: 100%; }
 }
+/* ==========================================================================
+   Лендинг «Фіалочка» (violet-reskin-plan.md, Фази 1–5).
+   Нові класи з префіксом `.lp-*` — наявні правила не чіпаємо.
+   ========================================================================== */
+
+/* --- Навігація: якорі секцій, бургер, лого --- */
+.logo-flower { display: inline-flex; align-items: center; justify-content: center; margin-right: 6px; color: var(--accent-2); }
+.logo-flower svg { width: 22px; height: 22px; }
+.nav-desktop { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.nav-anchor { color: var(--text-dim); text-decoration: none; }
+.nav-anchor:hover { color: var(--text); }
+.nav-burger {
+  display: none; background: none; border: 1px solid var(--glass-30);
+  color: var(--text); border-radius: var(--radius-sm); padding: 6px 8px;
+  cursor: pointer; line-height: 1;
+}
+.nav-mobile {
+  display: none;
+}
+.nav-burger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .nav-desktop { display: none; }
+  .nav-burger { display: inline-flex; }
+}
+@media (max-width: 860px) {
+  .nav-mobile {
+    display: flex; flex-direction: column; gap: 4px;
+    background: var(--glass-15); border: 1px solid var(--glass-30);
+    border-radius: var(--radius); padding: 10px 14px;
+    position: static; width: 100%;
+  }
+  .nav-mobile a { color: var(--text); text-align: left; padding: 6px 10px; text-decoration: none; border-radius: var(--radius-sm); }
+  .nav-mobile button { color: var(--text-dim); text-align: left; padding: 6px 10px; border-radius: var(--radius-sm); }
+}
+
+/* --- Hero --- */
+.lp-hero {
+  position: relative; overflow: hidden; text-align: center; padding: 72px 24px;
+  margin-bottom: 40px; border-radius: var(--radius);
+  border: 1px solid var(--glass-30); box-shadow: var(--shadow-panel);
+
+  container-type: inline-size; /* Відстежуємо ширину контейнера */
+  container-name: hero-section; /* Даємо йому ім'я (опціонально, але корисно) */
+}
+.lp-hero__bg {
+  position: absolute; inset: 0; background-size: cover; background-position: center;
+  background-image: linear-gradient(160deg, rgba(120, 81, 169, 0.66), rgba(30, 21, 38, 0.66));
+}
+.lp-hero__inner { position: relative; z-index: 1; padding: 24px; background: rgba(var(--accent-rgb), .3); border-radius: var(--radius); }
+.lp-hero__inner h1 { font-size: 44px; margin-bottom: 8px; color: var(--text); }
+.lp-hero__sub { font-size: 20px; color: var(--text); }
+.lp-hero__hint { color: var(--text-dim); margin-top: 12px; }
+.lp-hero .lp-btn-lg { font-size: 17px; padding: 12px 24px; }
+
+@container hero-section (width < 500px) {
+  
+  .lp-hero .lp-btn-lg { 
+    font-size: 14px; 
+    padding: 10px 16px; 
+    background-color: rgb(199, 21, 133); /* Змінюємо колір для наочності */
+  }
+  
+}
+.lp-hero .lp-btn-lg svg { width: 18px; height: 18px; margin-left: 8px; }
+
+/* --- Секції лендингу --- */
+.lp-section { margin-bottom: 48px; }
+.lp-section.lp-alt {
+  background: var(--glass-10); border: 1px solid var(--glass-15);
+  border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow-soft);
+}
+.lp-h2 { font-size: 28px; margin: 0 0 6px; color: var(--text); }
+.lp-section .lp-h2::after { content: ""; display: block; width: 56px; height: 3px; margin: 10px 0 18px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.lp-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; color: var(--accent); }
+
+/* --- Services --- */
+.lp-svc-group { margin-bottom: 20px; }
+.lp-svc-group h3 { display: flex; align-items: center; gap: 10px; font-size: 18px; color: var(--text); margin-top: 6px; }
+.lp-svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.lp-svc {
+  background: var(--glass-10); border: 1px solid var(--glass-15);
+  border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow-soft);
+}
+.lp-svc h4 { margin: 0 0 4px; font-size: 15px; color: var(--text); }
+.lp-svc p { margin: 0; font-size: 13px; color: var(--muted); }
+
+/* --- Gallery --- */
+.lp-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.lp-gallery__cell {
+  aspect-ratio: 4 / 3; border-radius: var(--radius); border: 1px solid var(--glass-30);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  color: var(--text); box-shadow: var(--shadow-soft);
+}
+.lp-gallery__icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: #fff; }
+.lp-gallery__cell span { font-size: 14px; }
+
+/* --- Pricing --- */
+.lp-price { }
+.lp-price__group { font-size: 16px; color: var(--text); margin: 14px 0 10px; }
+.lp-price ul { list-style: none; padding: 0; margin: 0; }
+.lp-price li.lp-price__row {
+  display: flex; align-items: baseline; gap: 6px; padding: 10px 12px; margin-bottom: 6px;
+  background: var(--glass-10); border: 1px solid var(--glass-15); border-radius: var(--radius);
+}
+.lp-price__row span { color: var(--text); }
+.lp-price__spacer { flex: 1; border-bottom: 1px dashed var(--muted); }
+.lp-price__row b { color: var(--accent); font-weight: 700; min-width: 64px; }
+.lp-price__row i { color: var(--muted); font-size: 13px; min-width: 52px; text-align: right; }
+
+/* --- Про салон --- */
+.lp-about__lead { font-size: 15px; color: var(--text); line-height: 1.6; }
+.lp-about__list { list-style: none; padding: 0; margin: 16px 0 0; }
+.lp-about__list li { display: flex; align-items: center; gap: 10px; padding: 8px 0; color: var(--text); font-size: 15px; }
+.lp-about__list .lp-icon { width: 22px; height: 22px; color: var(--accent-2); }
+
+/* --- Contact --- */
+.lp-contact { }
+.lp-contact p { color: var(--text); }
+.lp-contact__actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0; }
+.lp-contact__actions .btn { display: inline-flex; align-items: center; gap: 8px; }
+.lp-contact__actions .btn svg { width: 18px; height: 18px; }
+.lp-contact__meta { display: flex; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 14px; }
+.lp-contact__meta span { display: inline-flex; align-items: center; gap: 6px; }
+.lp-contact__meta svg { width: 16px; height: 16px; color: var(--accent-2); }
+
+/* --- Футер: посилання телефону + соцмережі --- */
+.footer a { color: var(--accent-2); text-decoration: none; }
+.footer a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer__social { display: flex; gap: 14px; justify-content: center; margin-top: 8px; color: var(--muted); }
+.footer__social svg { width: 20px; height: 20px; }
+.footer__social svg:hover { color: var(--accent-2); }
 /* Адмінка (Фази 9–11): чекбокс не розтягується глобальним правилом input */
 input[type="checkbox"] { display: inline-block; width: auto; margin: 0 6px 0 0; vertical-align: middle; }
 
@@ -294,6 +431,43 @@ input[type="checkbox"] { display: inline-block; width: auto; margin: 0 6px 0 0; 
 }
 .login-inline .btn { margin-top: 6px; }
 .login-inline label { margin-top: 8px; }
+/* Hero на всю ширину екрана (вихід за межі центрованого main) + фон салону:
+   SVG-паттерн (ножиці + блискітки, data-URI без окремих файлів) поверх градієнта. */
+.lp {
+    /* overflow-x: clip; */
+}
+/* Захист від горизонтального скролу (100vw-банер ширший за вікно на ширину скролбара).
+   На body замість .lp — героя не зачіпає, sticky-шапку не ламає (clip не створює скрол-контейнер). */
+html, body { overflow-x: clip; }
+/* Hero впритул до шапки: прибираємо верхній відступ main (було 24px). */
+main { padding: 0px 16px 24px; }
+/* Фікс подвійного меню: .header nav (0,1,1) сильніше за .nav-desktop (0,1,0) і глушить
+   display:none — підвищуємо специфічність; мобільне меню ховаємо на десктопі. */
+@media (max-width: 860px) {
+  .header nav.nav-desktop { display: none; }
+}
+@media (min-width: 861px) {
+  .nav-mobile { display: none; }
+}
+.lp-hero {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  padding: 96px 24px;
+}
+.lp-hero__bg {
+  /* Справжнє фото: поклади файл у client/public/hero-salon.jpg (широке, від 1600px).
+     Поки файлу немає — видно лише градієнт, верстка не ламається. */
+  background-image:
+    url("/hero-salon.jpg"),
+    linear-gradient(160deg, rgba(120, 81, 169, 0.55), rgba(30, 21, 38, 0.78));
+  background-size: cover, cover;
+  background-position: center, center;
+}
 /* Редактор відхилень графіка (BookingCalendar mode='edit', master-day-override-plan): стани днів клікабельні. */
 .cal-day--off { opacity: .45; }
 .cal-day--ov-on { border-color: var(--accent); background: var(--glass-15); }
