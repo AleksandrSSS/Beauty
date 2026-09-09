@@ -1,0 +1,46 @@
+/* ============================================================
+   Design tokens — витягнуті з макета Figma
+   "BEAUTY SALON SYSTEM (Community)" (стиль DressUp)
+   Використання: Варіант A — візуальний ре-скін наявних сторінок.
+   Ці змінні призначені для інтеграції у client/src/styles.css.
+   ============================================================ */
+
+:root {
+  /* --- Акцент --- */
+  --ds-accent: #fb646b;          /* кораловий: кнопки, активні стани */
+  --ds-accent-hover: #e8555c;    /* трохи темніший для :hover */
+
+  /* --- Текст --- */
+  --ds-text: #ffffff;            /* основний текст на темному фоні */
+  --ds-text-muted: #87888c;      /* приглушений (неактивні пункти меню) */
+  --ds-text-dim: rgba(255, 255, 255, 0.6);
+
+  /* --- Скляні поверхні (glassmorphism) --- */
+  --ds-glass-10: rgba(255, 255, 255, 0.1);   /* панелі, активний пункт меню */
+  --ds-glass-15: rgba(255, 255, 255, 0.15);  /* роздільники, бордюри */
+  --ds-glass-30: rgba(255, 255, 255, 0.3);   /* інпути */
+  --ds-glass-blur: 12px;                      /* backdrop-filter */
+
+  /* --- Фон --- */
+  --ds-bg-dark: #202020;         /* базовий темний */
+  --ds-bg-overlay: rgba(20, 21, 15, 0.55);   /* затемнення поверх фото */
+  /* фонове фото: design/assets/background.png */
+  --ds-bg-gradient: linear-gradient(90deg, #202020 0%, #b1a857 52%, #202020 100%);
+
+  /* --- Радіуси --- */
+  --ds-radius: 10px;             /* панелі, поля, кнопки */
+  --ds-radius-sm: 5px;
+
+  /* --- Тіні (з макета, спрощено) --- */
+  --ds-shadow-panel: 7px 14px 36px rgba(0, 0, 0, 0.38), 29px 58px 65px rgba(0, 0, 0, 0.20);
+  --ds-shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.33);
+
+  /* --- Типографіка --- */
+  --ds-font: 'Inter', system-ui, sans-serif;
+  --ds-font-logo: 'Jaldi', 'Inter', sans-serif;
+  --ds-fs-menu: 24px;
+  --ds-fs-input: 20px;
+  --ds-fs-title: 32px;
+  --ds-fw-medium: 500;
+  --ds-fw-bold: 700;
+}

@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: beauty-db
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      POSTGRES_DB: beauty
+      POSTGRES_USER: beauty
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-beauty}
+    ports:
+      - "5432:5432"
+    volumes:
+      - beauty_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U beauty"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  beauty_pgdata:

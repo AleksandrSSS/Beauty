@@ -1,0 +1,39 @@
+# ── Секрети та локальне середовище ──────────────────────────────
+.env
+client/.env
+
+# ── Лог файли ────────────────────────────────────────────────────
+*.log
+build.log
+build-err.log
+client/build.log
+client/build.err
+
+# ── Інструменти редактора / локальні налаштування агента ─────────
+.kiro/
+
+# ── Клієнт (Node) ────────────────────────────────────────────────
+node_modules/
+client/node_modules/
+client/dist/
+client/dist-ssr/
+client/*.tsbuildinfo
+client/etc/
+client/.vite/
+client/npm-debug.log*
+
+# ── Бекенд (.NET) ────────────────────────────────────────────────
+server/bin/
+server/obj/
+*.user
+
+# ── Завантажені файли та дампи БД ────────────────────────────────
+server/wwwroot/uploads/
+db-backup-*.sql
+
+# ── ОС / редактори ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
