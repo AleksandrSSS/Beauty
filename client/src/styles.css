@@ -77,7 +77,7 @@ main { flex: 1; max-width: 1000px; margin: 0 auto; padding: 24px 16px; width: 10
   border-bottom: 1px solid var(--glass-15);
   position: sticky; top: 0; z-index: 10;
 }
-.logo { font-weight: 700; font-size: 20px; text-decoration: none; color: var(--text); }
+.logo { font-weight: 700; font-size: 20px; text-decoration: none; color: var(--text); display: flex; gap: 8px; }
 .header nav { display: flex; gap: 18px; align-items: center; }
 .header nav a { color: var(--text-dim); text-decoration: none; border-radius: var(--radius-sm); padding: 6px 10px; transition: color .2s, background .2s; }
 .header nav a:hover { color: var(--text); background: var(--glass-10); }
@@ -282,7 +282,7 @@ a.master-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 
    ========================================================================== */
 
 /* --- Навігація: якорі секцій, бургер, лого --- */
-.logo-flower { display: inline-flex; align-items: center; justify-content: center; margin-right: 6px; color: var(--accent-2); }
+.logo-flower { display: inline-flex; align-items: center; justify-content: center; /* margin-right: 6px; */ color: var(--accent-2); }
 .logo-flower svg { width: 22px; height: 22px; }
 .nav-desktop { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .nav-anchor { color: var(--text-dim); text-decoration: none; }

@@ -411,16 +411,33 @@ public class AdminController(AppDbContext db, IWebHostEnvironment env, IConfigur
     }
 
     [HttpGet("appointments")]
-    public async Task<IActionResult> Appointments([FromQuery] DateTime? from)
+    public async Task<IActionResult> Appointments([FromQuery] DateTime? from, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
     {
+        if (page < 1) page = 1;
+        if (pageSize < 1 || pageSize > 200) pageSize = 50;
+
         var query = db.Appointments.Include(a => a.Client).Include(a => a.Master).Include(a => a.Service).AsQueryable();
         if (from.HasValue) query = query.Where(a => a.StartTime >= from);
-        var list = await query.OrderBy(a => a.StartTime).ToListAsync();
-        return Ok(list.Select(a => new
+
+        var total = await query.CountAsync();
+        var list = await query
+            .OrderBy(a => a.StartTime)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return Ok(new
         {
-            a.Id, client = a.Client.Name, phone = a.Client.Phone, service = a.Service.Name, master = a.Master.Name,
-            a.StartTime, a.EndTime, status = a.Status.ToString()
-        }));
+            page,
+            pageSize,
+            total,
+            totalPages = (int)Math.Ceiling(total / (double)pageSize),
+            items = list.Select(a => new
+            {
+                a.Id, client = a.Client.Name, phone = a.Client.Phone, service = a.Service.Name, master = a.Master.Name,
+                a.StartTime, a.EndTime, status = a.Status.ToString()
+            })
+        });
     }
 
     [HttpPut("appointments/{id}/reschedule")]

@@ -18,7 +18,8 @@ public class JwtService(IConfiguration cfg)
         };
         var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(cfg["Jwt:Key"]!));
         var jwt = new JwtSecurityToken(cfg["Jwt:Issuer"], cfg["Jwt:Audience"], claims,
-            expires: DateTime.UtcNow.AddHours(cfg.GetValue("Jwt:ExpireHours", 24)),
+            // Короткий access-токен (S1-6b): дефолт 15 хв, оновлюється через refresh-cookie.
+            expires: DateTime.UtcNow.AddMinutes(cfg.GetValue("Jwt:AccessMinutes", 15)),
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
         return new JwtSecurityTokenHandler().WriteToken(jwt);
     }

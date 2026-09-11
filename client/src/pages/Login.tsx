@@ -14,6 +14,7 @@ export default function Login() {
   const [contact, setContact] = useState('')
   const [code, setCode] = useState('')
   const [sent, setSent] = useState(false)
+  const [requestId, setRequestId] = useState('')
   const [info, setInfo] = useState('')
   const [err, setErr] = useState('')
   const [adminMode, setAdminMode] = useState(false)
@@ -24,6 +25,7 @@ export default function Login() {
     try {
       const r = await requestCode({ phone, channel, contact: contact || null })
       setSent(true)
+      setRequestId(r.requestId)
       setInfo(r.devCode ? `DEV-режим: код — ${r.devCode}` : r.info || 'Код надіслано')
     } catch (e) { setErr(errMsg(e)) }
   }
@@ -31,7 +33,7 @@ export default function Login() {
   const verify = async () => {
     setErr('')
     try {
-      const r = await verifyCode({ phone, code, name, contact: contact || null })
+      const r = await verifyCode({ phone, code, name, contact: contact || null, requestId })
       login(r.token, r.user)
       nav(r.user.role === 'Admin' ? '/admin' : '/cabinet')
     } catch (e) { setErr(errMsg(e)) }
@@ -66,7 +68,7 @@ export default function Login() {
         <>
           <p className="muted">{info}</p>
           <label>Код підтвердження</label>
-          <input value={code} onChange={e => setCode(e.target.value)} placeholder="0000" />
+          <input value={code} onChange={e => setCode(e.target.value)} placeholder="000000" />
           <label>Імʼя (для нових клієнтів)</label>
           <input value={name} onChange={e => setName(e.target.value)} />
           <button className="btn primary" onClick={verify}>Увійти</button>

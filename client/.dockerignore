@@ -1,0 +1,8 @@
+# Залежності й артефакти ставляться/збираються на етапі build у контейнері.
+node_modules/
+dist/
+*.tsbuildinfo
+# Локальні env клієнта не потрібні: у docker-збірці API — відносний (через nginx).
+.env
+build.log
+build.err

@@ -107,6 +107,8 @@ export interface AuthResponse {
 }
 
 export interface DevCodeResponse {
+  /** Ідентифікатор запиту коду — потрібен для verify-code (S1-5). */
+  requestId: string
   mock: boolean
   info: string
   devCode?: string | null
@@ -182,4 +184,13 @@ export interface MasterScheduleDayDto {
 export interface RotationPreviewDayDto {
   date: string
   isWorking: boolean
+}
+
+/** Пагінована відповідь GET /api/admin/appointments (S2-3). */
+export interface PagedAppointments {
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  items: AppointmentDto[]
 }

@@ -17,6 +17,9 @@ export default function Booking() {
   const location = useLocation()
   const prefill = (location.state as Prefill | null) ?? null
   const pendingStart = useRef<string | null>(null)
+  // Після появи блоку «Підтвердження» (внизу сторінки — зокрема прихід зі сторінки
+  // майстра) прокручуємо до нього, щоб не лишатись у верхній точці.
+  const confirmRef = useRef<HTMLDivElement | null>(null)
   const { user, login } = useAuth()
 
   const [services, setServices] = useState<ServiceDto[]>([])
@@ -78,6 +81,10 @@ export default function Booking() {
     }).catch(e => { if (alive) setErr(errMsg(e)) })
     return () => { alive = false }
   }, [serviceId, mode, masterId])
+
+  useEffect(() => {
+    if (slot) confirmRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [slot])
 
   const byDate = useMemo(() => {
     const map = new Map<string, SlotDto[]>()
@@ -257,7 +264,7 @@ export default function Booking() {
           )}
 
           {slot && bookingMasterId != null && (
-            <div className="step">
+            <div className="step" ref={confirmRef}>
               <h3>{nConfirm}. Підтвердження</h3>
 
               {/* Залогінений: без коду, без вибору каналу — все з профілю. */}

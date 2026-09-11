@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { errMsg, fetchMaster, fetchMasterSchedule, fetchSlots } from '../api'
 import BookingCalendar from '../components/BookingCalendar'
@@ -27,6 +27,12 @@ export default function MasterSchedule() {
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [date, setDate] = useState<string | null>(null)
   const [slot, setSlot] = useState<string | null>(null)
+  // Після появи блоку «Підтвердження» (внизу сторінки) прокручуємо до нього,
+  // щоб користувач не лишався у верхній точці після кліку по часу.
+  const confirmRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (slot) confirmRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [slot])
 
   // Послуга — фільтр із дефолтом (§3.2): перша послуга майстра, поки користувач не обрав іншу.
   // Похідне значення замість окремого стану — не потребує setState у ефекті.
@@ -146,7 +152,7 @@ export default function MasterSchedule() {
       )}
 
       {slot && serviceId && (
-        <div className="step">
+        <div className="step" ref={confirmRef}>
           <h3>Підтвердження</h3>
           <p>Запис до майстра {master.name}. Наступний крок — підтвердження кодом.</p>
           <button className="btn primary"

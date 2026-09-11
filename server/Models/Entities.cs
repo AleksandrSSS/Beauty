@@ -18,6 +18,7 @@ public class User
     public string? ExternalContact { get; set; }       // telegram chat id / email / etc.
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }
 
 public class Service
@@ -101,12 +102,34 @@ public class VerificationCode
 {
     public int Id { get; set; }
     public string Phone { get; set; } = default!;
-    public string Code { get; set; } = default!;
+    /// <summary>SHA256(code + salt) у hex. Відкритого коду в БД не зберігаємо (S1-2).</summary>
+    public string CodeHash { get; set; } = default!;
     public string Purpose { get; set; } = default!;    // login | booking
     public int? AppointmentId { get; set; }
     public NotifyChannel Channel { get; set; }
+    /// <summary>Ідентифікатор запиту коду: verify вимагає той самий RequestId (S1-5, захист від перезапису чужого профілю).</summary>
+    public Guid RequestId { get; set; }
+    /// <summary>Кількість невдалих спроб verify. При &gt; 5 код спалюється (S1-3).</summary>
+    public int AttemptCount { get; set; }
     public DateTime ExpiresAt { get; set; }
     public DateTime? ConsumedAt { get; set; }
+}
+
+/// <summary>
+/// Refresh-токен (S1-6b): довгоживучий, зберігається як хеш, віддається клієнту в httpOnly-cookie.
+/// Access-JWT короткий (15 хв); оновлення — через /api/auth/refresh, відкликання — через /logout.
+/// </summary>
+public class RefreshToken
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public User User { get; set; } = default!;
+    /// <summary>SHA256(token) у hex. Сирий токен існує лише в cookie клієнта.</summary>
+    public string TokenHash { get; set; } = default!;
+    public DateTime ExpiresAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>Момент відкликання (logout / ротація). null — активний.</summary>
+    public DateTime? RevokedAt { get; set; }
 }
 
 public class NotificationLog

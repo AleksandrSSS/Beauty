@@ -16,7 +16,7 @@ public record ConfirmBookingDto(int AppointmentId, string Code, string? Phone = 
 
 [ApiController]
 [Route("api/booking")]
-public class BookingController(AppDbContext db, INotificationService notifier, SalonClock clock, ScheduleService schedule, JwtService jwt) : ControllerBase
+public class BookingController(AppDbContext db, INotificationService notifier, SalonClock clock, ScheduleService schedule, JwtService jwt, TokenHasher hasher, RefreshTokenService refresh) : ControllerBase
 {
     /// <summary>
     /// Вільні слоти на 28 днів. Якщо MasterId задано — лише обраний майстер;
@@ -24,6 +24,7 @@ public class BookingController(AppDbContext db, INotificationService notifier, S
     /// містить список майстрів, вільних саме в цей час.
     /// </summary>
     [HttpPost("slots")]
+    [AllowAnonymous]
     public async Task<IActionResult> Slots(SlotsQuery q, CancellationToken ct)
     {
         List<SlotDto> slots;
@@ -148,12 +149,13 @@ public class BookingController(AppDbContext db, INotificationService notifier, S
         string? code = null;
         if (!isAuthenticated)
         {
-            code = new string(Enumerable.Range(0, 4).Select(_ => AuthController.CodeChars[Random.Shared.Next(AuthController.CodeChars.Length)]).ToArray());
+            // 6-значний код (S1-1), у БД — лише хеш (S1-2).
+            code = Random.Shared.Next(0, 1_000_000).ToString("D6");
             db.VerificationCodes.Add(new VerificationCode
             {
                 Phone = phone,
-                Code = code, Purpose = "booking", AppointmentId = appt.Id,
-                Channel = channel, ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+                CodeHash = hasher.HashCode(code), Purpose = "booking", AppointmentId = appt.Id,
+                Channel = channel, RequestId = Guid.NewGuid(), ExpiresAt = DateTime.UtcNow.AddMinutes(10)
             });
             await db.SaveChangesAsync(ct);
         }
@@ -203,7 +205,7 @@ public class BookingController(AppDbContext db, INotificationService notifier, S
         if (appt.Status != AppointmentStatus.PendingVerification) return BadRequest(new { error = "Запис уже оброблено" });
 
         var vc = await db.VerificationCodes
-            .Where(v => v.AppointmentId == appt.Id && v.Phone == user.Phone && v.Code == dto.Code.Trim() && v.ConsumedAt == null && v.ExpiresAt > DateTime.UtcNow)
+            .Where(v => v.AppointmentId == appt.Id && v.Phone == user.Phone && v.CodeHash == hasher.HashCode(dto.Code.Trim()) && v.ConsumedAt == null && v.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(v => v.Id).FirstOrDefaultAsync();
         if (vc == null) return BadRequest(new { error = "Невірний або прострочений код" });
 
@@ -213,6 +215,7 @@ public class BookingController(AppDbContext db, INotificationService notifier, S
 
         var msg = $"Запис підтверджено: {appt.Service.Name} у майстра {appt.Master.Name}, {clock.Format(appt.StartTime)}. Ми нагадаємо вам за 3 години.";
         await notifier.SendAsync(appt.NotifyChannel, NotificationService.ResolveRecipient(user, appt.NotifyChannel), msg);
+        await refresh.IssueAsync(Response, user);
         return Ok(new { ok = true, token = jwt.CreateToken(user), user = new { user.Id, user.Phone, user.Name, user.Email, role = user.Role.ToString(), user.PreferredChannel } });
     }
 }

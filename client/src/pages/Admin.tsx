@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { api, deleteAppointment, deleteMasterDayOverride, deleteMasterPhoto, errMsg, fetchMasterDayOverrides, fetchMasterSchedule, fetchSalonHours, previewRotation, putMasterDayOverride, resolvePhotoUrl, updateSalonHours, uploadMasterPhoto } from '../api'
+import { api, deleteAppointment, deleteMasterDayOverride, deleteMasterPhoto, errMsg, fetchAdminAppointments, fetchMasterDayOverrides, fetchMasterSchedule, fetchSalonHours, previewRotation, putMasterDayOverride, resolvePhotoUrl, updateSalonHours, uploadMasterPhoto } from '../api'
 import { useAuth } from '../auth'
 import BookingCalendar, { type DayState } from '../components/BookingCalendar'
 import { todaySalon } from '../salon'
@@ -42,6 +42,9 @@ export default function Admin() {
   const [services, setServices] = useState<ServiceDto[]>([])
   const [masters, setMasters] = useState<MasterDto[]>([])
   const [appts, setAppts] = useState<AppointmentDto[]>([])
+  // Пагінація записів (S2-3).
+  const [apptPage, setApptPage] = useState(1)
+  const [apptTotalPages, setApptTotalPages] = useState(1)
   const [svcForm, setSvcForm] = useState<ServiceForm>(emptyService())
   const [mstForm, setMstForm] = useState<MasterForm>(emptyMaster())
   const [err, setErr] = useState('')
@@ -64,9 +67,20 @@ export default function Admin() {
   const load = () => {
     api<ServiceDto[]>('/api/admin/services').then(setServices)
     api<MasterDto[]>('/api/admin/masters').then(setMasters)
-    api<AppointmentDto[]>('/api/admin/appointments').then(setAppts)
+    fetchAdminAppointments(apptPage).then(r => {
+      setAppts(r.items)
+      setApptTotalPages(r.totalPages || 1)
+    })
   }
   useEffect(() => { if (user?.role === 'Admin') load() }, [user])
+  // Перезавантаження записів при зміні сторінки.
+  useEffect(() => {
+    if (user?.role !== 'Admin') return
+    fetchAdminAppointments(apptPage).then(r => {
+      setAppts(r.items)
+      setApptTotalPages(r.totalPages || 1)
+    }).catch(() => {})
+  }, [apptPage])
   useEffect(() => {
     if (user?.role !== 'Admin' || !mstForm.rotationAnchor) return
     let alive = true
@@ -491,6 +505,14 @@ export default function Admin() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {tab === 'appointments' && apptTotalPages > 1 && (
+        <div className="pager" style={{ display: 'flex', gap: '.5rem', alignItems: 'center', marginTop: '.75rem' }}>
+          <button className="btn" disabled={apptPage <= 1} onClick={() => setApptPage(p => Math.max(1, p - 1))}>← Назад</button>
+          <span className="muted">Сторінка {apptPage} з {apptTotalPages}</span>
+          <button className="btn" disabled={apptPage >= apptTotalPages} onClick={() => setApptPage(p => Math.min(apptTotalPages, p + 1))}>Далі →</button>
+        </div>
       )}
 
       {tab === 'hours' && (

@@ -12,10 +12,12 @@ namespace Beauty.Server.Controllers;
 public class CatalogController(AppDbContext db, SalonClock clock, ScheduleService schedule) : ControllerBase
 {
     [HttpGet("services")]
+    [AllowAnonymous]
     public async Task<IActionResult> Services() =>
         Ok(await db.Services.Where(s => s.IsActive).OrderBy(s => s.Category).ThenBy(s => s.Name).ToListAsync());
 
     [HttpGet("masters")]
+    [AllowAnonymous]
     public async Task<IActionResult> Masters()
     {
         var masters = await db.Masters.Include(m => m.MasterServices).Where(m => m.IsActive).ToListAsync();

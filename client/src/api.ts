@@ -9,6 +9,7 @@ import type {
   MasterDto,
   MasterScheduleDayDto,
   DayOverride,
+  PagedAppointments,
   RotationPreviewDayDto,
   RotationType,
   SalonHoursDto,
@@ -35,15 +36,51 @@ export function setAuth(t: string | null, u: UserInfo | null) {
   if (u) localStorage.setItem('user', JSON.stringify(u)); else localStorage.removeItem('user')
 }
 
-export async function api<T = unknown>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
-  const res = await fetch(API + path, {
+/** Оновлює лише access-токен у пам'яті та localStorage (після /api/auth/refresh). */
+function setToken(t: string | null) {
+  token = t
+  if (t) localStorage.setItem('token', t); else localStorage.removeItem('token')
+}
+
+// Одноразова спроба оновити access-токен за refresh-cookie. Захист від паралельних
+// рефрешів: усі 401 чекають на один спільний проміс.
+let refreshing: Promise<boolean> | null = null
+async function tryRefresh(): Promise<boolean> {
+  if (!refreshing) {
+    refreshing = fetch(`${API}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
+      .then(async res => {
+        if (!res.ok) return false
+        const data = await res.json().catch(() => null) as { token?: string; user?: UserInfo } | null
+        if (!data?.token) return false
+        setToken(data.token)
+        if (data.user) localStorage.setItem('user', JSON.stringify(data.user))
+        return true
+      })
+      .catch(() => false)
+      .finally(() => { refreshing = null })
+  }
+  return refreshing
+}
+
+async function rawFetch(path: string, opts: { method?: string; body?: unknown }): Promise<Response> {
+  return fetch(API + path, {
     method: opts.method || 'GET',
+    // credentials — щоб httpOnly refresh-cookie ходила на /api/auth (S1-6b).
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
   })
+}
+
+export async function api<T = unknown>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  let res = await rawFetch(path, opts)
+  // Прозоре оновлення протермінованого access-токена (крім самих auth-ендпоінтів).
+  if (res.status === 401 && !path.startsWith('/api/auth/') && token && await tryRefresh()) {
+    res = await rawFetch(path, opts)
+  }
   const data = await res.json().catch(() => ({})) as { error?: string }
   if (!res.ok) throw new Error(data.error || `Помилка ${res.status}`)
   return data as T
@@ -62,10 +99,13 @@ export const fetchSlots = (masterId: number | null, serviceId: number) =>
 export const fetchAppointments = () => api<AppointmentDto[]>('/api/account/appointments')
 export const requestCode = (body: { phone: string; channel: ChannelId; contact: string | null }) =>
   api<DevCodeResponse>('/api/auth/request-code', { method: 'POST', body })
-export const verifyCode = (body: { phone: string; code: string; name: string; contact: string | null }) =>
+export const verifyCode = (body: { phone: string; code: string; name: string; contact: string | null; requestId: string }) =>
   api<AuthResponse>('/api/auth/verify-code', { method: 'POST', body })
 export const adminLogin = (body: { phone: string; password: string }) =>
   api<AuthResponse>('/api/auth/admin-login', { method: 'POST', body })
+/** Вихід: відкликає refresh-токен на сервері й прибирає cookie (S1-6b). */
+export const logoutApi = () =>
+  api<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }).catch(() => ({ ok: false }))
 export const createBooking = (body: { masterId: number | null; serviceId: number | null; startTime: string | null; channel?: string | null; contact?: string | null; phone?: string; name?: string | null }) =>
   api<BookingCreateResponse>('/api/booking/create', { method: 'POST', body })
 export const confirmBooking = (body: { appointmentId: number; code: string; phone?: string }) =>
@@ -106,6 +146,10 @@ export const updateSalonHours = (body: { openTime: string; closeTime: string }) 
 // ---- Адмін: видалення запису (hard-delete) ----
 export const deleteAppointment = (id: number) =>
   api<{ ok: boolean }>(`/api/admin/appointments/${id}`, { method: 'DELETE' })
+
+// ---- Адмін: список записів із пагінацією (S2-3) ----
+export const fetchAdminAppointments = (page = 1, pageSize = 50) =>
+  api<PagedAppointments>(`/api/admin/appointments?page=${page}&pageSize=${pageSize}`)
 
 // ---- Адмін: відхилення графіка майстра (override) ----
 export const fetchMasterDayOverrides = (id: number) =>

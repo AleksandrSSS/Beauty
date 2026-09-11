@@ -18,5 +18,39 @@ services:
       timeout: 3s
       retries: 10
 
+  server:
+    build:
+      context: ./server
+    container_name: beauty-server
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      # Production: без devCode у відповідях, приховані деталі помилок.
+      ASPNETCORE_ENVIRONMENT: Production
+      # Секрети та підключення — з кореневого .env (значення не в git).
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=beauty;Username=beauty;Password=${POSTGRES_PASSWORD:-beauty}"
+      Jwt__Key: ${JWT_KEY}
+      Admin__Password: ${ADMIN_PASSWORD}
+      Security__CodeSalt: ${CODE_SALT}
+      # Той самий origin через nginx → дозволяємо його для CORS-запитів (та рефреш-cookie).
+      Cors__AllowedOrigins__0: "http://localhost:8080"
+    volumes:
+      # Завантажені фото майстрів переживають перезапуск контейнера.
+      - beauty_uploads:/app/wwwroot/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./client
+    container_name: beauty-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+
 volumes:
   beauty_pgdata:
+  beauty_uploads:

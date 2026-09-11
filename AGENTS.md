@@ -44,9 +44,12 @@ docs/review/Kiro/            — quick-wins-check.md, masters-feature-plan.md
 
 ## 3. Команди
 
+Два режими запуску: **локальний dev** (dotnet + vite окремо) і **повний docker-стек** (усе в контейнерах, як на хості — див. §13).
+
 ```powershell
-# БД (потрібен кореневий .env — його НЕМАЄ, docker compose без нього впаде)
-docker compose up -d
+# --- Локальний dev ---
+# Лише БД у docker (кореневий .env існує з POSTGRES_PASSWORD)
+docker compose up -d postgres
 docker exec beauty-db psql -U beauty -d beauty -c "\dt"
 
 # Бекенд, порт 5000
@@ -59,6 +62,11 @@ cd client; npm run build      # = tsc -b && vite build
 
 # EF (працює лише після Фази 1 плану — див. §7)
 dotnet ef migrations list --project server
+
+# --- Повний docker-стек (postgres + server + nginx), вхід на http://localhost:8080 ---
+docker compose up -d --build
+docker compose logs -f server
+docker compose down            # без -v! том БД зберігаємо (див. §7)
 ```
 
 Оточення розробника: SDK `10.0.400` / `10.0.204` / `9.0.306`; рантайми 8/9/10; `dotnet ef` CLI **10.0.8** (мажорно новіший за EF 9 у проєкті).
@@ -187,7 +195,7 @@ dotnet ef migrations list --project server                        # переко
 | `DbInitializer` (сід) | `RotationAnchor` залежить від дня першого запуску (M11); `(DayOfWeek)d` де `0 = Sunday`. Перенесено з `AppDbContext` **без** зміни семантики |
 | `AuthController.cs:89` | `adminPhone` — dead code |
 | `AdminController.UploadPhoto` | історія: `ReadExactlyAsync` давав 500 на файлі < 12 байт. **Виправлено 2026-09-04** — читаємо через `ReadAsync` і перевіряємо кількість байт |
-| кореневий `.env` | відсутній, хоч `docker-compose.yml` має `env_file: [.env]` → `docker compose up` впаде |
+| ~~кореневий `.env` відсутній~~ | **Виправлено 2026-09-11**: кореневий `.env` створено (у git не потрапляє, див. §13) |
 
 **Виправлено блоком C (2026-09-04) — не «фіксити» вдруге:**
 
@@ -229,7 +237,7 @@ dotnet ef migrations list --project server                        # переко
 - **P1-2** (єдиний компонент правил, у роадмапі названий `BookingValidator`) = Фаза 4, реалізується як **`ScheduleService`**.
 - **C7** = Фаза 1. **M4**, **M6** = Фаза 4. **C3** частково = Фаза 10.
 
-Поза планом лишаються (не братися без запиту): `P0-1` (`CodeHash`/`AttemptCount`), `P0-2` (rate limiting), `P0-4` (`RequestId`), `P0-6` (`RefreshTokens`), `C4` (`AuditLog` + матриця статусів), `M8` (FluentValidation), `M9` (пагінація), `M12` (`UseExceptionHandler`, security headers), Dockerfile, CI, тести, підключення `tokens.css`.
+Поза планом лишаються (не братися без запиту): `P0-1` (`CodeHash`/`AttemptCount`), `P0-2` (rate limiting), `P0-4` (`RequestId`), `P0-6` (`RefreshTokens`), `C4` (`AuditLog` + матриця статусів), `M8` (FluentValidation), CI, тести, підключення `tokens.css`. (`P0-*`, `M9`, `M12`, Dockerfile — вже виконані, див. §11/§13.)
 
 ---
 
@@ -237,7 +245,7 @@ dotnet ef migrations list --project server                        # переко
 
 - ❌ Не створювати й не видаляти файли «для порядку», не прибирати тимчасові артефакти без запиту.
 - ❌ Не додавати `global.json` — рішення користувача: гнучкість, беремо найвищий встановлений SDK.
-- ❌ Не створювати `Dockerfile` і не додавати сервіс `server` у `docker-compose.yml` — відкладено свідомо.
+- ✅ Docker-стек (2026-09-11): `Dockerfile` для `server` і `client`, сервіси `server`+`web` у `docker-compose.yml` — **реалізовано** (див. §13). Заборону знято за явним рішенням користувача. `Dockerfile`/`nginx.conf` не переписувати без запиту.
 - ❌ Не зберігати завантажені фото (`server/wwwroot/uploads/masters/*`) і дампи БД (`db-backup-*.sql`) у проєкті.
 - ❌ Не запускати `docker compose down -v` чи `DROP TABLE` — том містить робочі дані.
 - ❌ Не додавати інтерактивні флаги.
@@ -261,3 +269,40 @@ dotnet ef migrations list --project server                        # переко
 5. Якщо торкався схеми — `dotnet ef migrations list` и перевірка колонок у psql.
 6. Якщо змінював поведінку з часом — перевірити на межі доби (23:30 за Києвом) и на обох типах ротації.
 7. Стверджувати «працює» лише про те, що реально запускав. Не перевірене — називати не перевіреним.
+
+
+---
+
+## 13. Docker-стек (повний запуск «як на хості»)
+
+Реалізовано 2026-09-11. Дозволяє підняти весь застосунок у контейнерах однією командою. Локальний dev (`dotnet run` + `npm run dev`) **не зламано** — це паралельний спосіб запуску.
+
+### Архітектура
+
+Єдина точка входу — **nginx** (сервіс `web`). Клієнт і API — на одному origin, тому CORS у docker-режимі фактично не задіяний, а refresh-cookie (`SameSite=Lax`, `Path=/api/auth`) працює без застережень.
+
+```
+браузер → http://localhost:8080 → web (nginx)
+   ├── /            → статика React (Vite build)
+   ├── /api/...     → proxy_pass http://server:8080
+   └── /uploads/... → proxy_pass http://server:8080
+                         server → postgres:5432
+```
+
+Сервіси в `docker-compose.yml`:
+- **postgres** — `postgres:16`, том `beauty_pgdata`, healthcheck. Публічний порт `5432` (для psql з хоста).
+- **server** — `server/Dockerfile` (multi-stage `sdk:10.0` → `aspnet:10.0`), слухає `:8080` **лише** у docker-мережі (публічно не публікується). `ASPNETCORE_ENVIRONMENT=Production` → `devCode` не повертається, деталі помилок приховані. `depends_on: postgres (service_healthy)`. Міграції застосовуються самі на старті (`DbInitializer.Migrate()`).
+- **web** — `client/Dockerfile` (`node:20-alpine` build з `VITE_API_URL=""` → `nginx:alpine` + `client/nginx.conf`), порт `8080:80`.
+
+### Секрети й конфіг
+
+- Значення — у кореневому `.env` (у git не потрапляє). Шаблон — `.env.example`. Ключі: `POSTGRES_PASSWORD`, `JWT_KEY` (≥32 байти), `ADMIN_PASSWORD`, `CODE_SALT`.
+- У `server` передаються як env: `ConnectionStrings__Default` (`Host=postgres`), `Jwt__Key`, `Admin__Password`, `Security__CodeSalt`. **User-secrets у контейнер не йдуть** — тільки `.env`.
+- **`POSTGRES_PASSWORD` лишати `beauty`**: наявний том `beauty_pgdata` ініціалізовано саме з ним; зміна = контейнер БД не підключиться до старого тому.
+
+### Важливі застереження
+
+- **Спільний том БД із локальним dev.** Стек запускається з тієї ж папки → той самий том `beauty_pgdata`. БД уже містить адміна, створеного локально зі старих user-secrets. Через ідемпотентний сід (§7) `ADMIN_PASSWORD` з `.env` застосується **лише до порожньої БД** — на наявній пароль адміна лишається старим. Скидати том (`down -v`) для застосування нового пароля **заборонено** (§7, §11).
+- **HTTP без TLS** — для локального «хоста». Refresh-cookie `Secure=false` (ключ `Jwt:RefreshCookieSecure`). Для реального прода: HTTPS + `Jwt__RefreshCookieSecure=true` через env.
+- Фото майстрів — том `beauty_uploads:/app/wwwroot/uploads` (переживають перезапуск).
+- `Dockerfile`, `nginx.conf`, склад сервісів у compose — **не переписувати без запиту**.

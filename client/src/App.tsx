@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from './auth'
+import { logoutApi } from './api'
 import Home from './pages/Home'
 import Booking from './pages/Booking'
 import Login from './pages/Login'
 import Cabinet from './pages/Cabinet'
 import Admin from './pages/Admin'
 import MasterSchedule from './pages/MasterSchedule'
-import { IconFacebook, IconFlower, IconInstagram, IconMenu, IconTelegram } from './components/icons'
+import { IconFacebook, IconFlowerDef, IconInstagram, IconMenu, IconTelegram } from './components/icons'
 
 /** Скрол-якорі секцій на головній (violet-reskin-plan.md §5). */
 const SECTIONS: [id: string, label: string][] = [
@@ -24,7 +25,7 @@ export default function App() {
   const { user: currentUser, login } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const logout = () => { login(null, null); nav('/') }
+  const logout = () => { logoutApi(); login(null, null); nav('/') }
 
   /** Плавний перехід до секції: на головній прямо, інак — спочатку на `/`. */
   const goSection = (id: string) => {
@@ -45,7 +46,9 @@ export default function App() {
     <div className="app">
       <header className="header">
         <NavLink to="/" className="logo" aria-label="Фіалочка — на головну">
-          <span className="logo-flower" aria-hidden="true"><IconFlower /></span> Фіалочка
+          <span className="logo-flower" aria-hidden="true">
+            <IconFlowerDef />
+          </span> <span>Фіалочка</span>
         </NavLink>
         <nav className="nav-desktop">
           {SECTIONS.map(([id, label]) => (

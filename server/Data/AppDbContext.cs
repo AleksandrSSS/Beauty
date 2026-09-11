@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<VerificationCode> VerificationCodes => Set<VerificationCode>();
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -22,5 +23,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         mb.Entity<Appointment>().HasIndex(a => new { a.MasterId, a.StartTime });
         // Один override на дату на майстра; каскадне видалення при hard-delete майстра.
         mb.Entity<MasterDayOverride>().HasIndex(o => new { o.MasterId, o.Date }).IsUnique();
+        // Пошук коду за телефоном/запитом; пошук refresh-токена за хешем.
+        mb.Entity<VerificationCode>().HasIndex(v => new { v.Phone, v.RequestId });
+        mb.Entity<RefreshToken>().HasIndex(t => t.TokenHash).IsUnique();
+        mb.Entity<RefreshToken>()
+            .HasOne(t => t.User).WithMany(u => u.RefreshTokens)
+            .HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }
